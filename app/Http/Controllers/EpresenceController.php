@@ -13,9 +13,7 @@ class EpresenceController extends Controller
     public function epresence(Request $request)
     {
         $user = Auth::user();
-        // $user = $user->makeHidden(['email_verified_at', 'password', 'remember_token']);
-        // return $user;
-        // return $request->all();
+        $user = $user->makeHidden(['email_verified_at', 'password', 'remember_token']);
 
         $validate = Validator::make($request->all(), [
             'type' => ['string', 'required'],
@@ -95,9 +93,6 @@ class EpresenceController extends Controller
     public function approve($id)
     {
         $user = Auth::user();
-        // $user = $user->makeHidden(['email_verified_at', 'password', 'remember_token']);
-        // return $user;
-        // return $request->all();
 
         $db = DB::table('epresences as ep')
             ->where('ep.id', $id)
@@ -114,9 +109,6 @@ class EpresenceController extends Controller
             $response['status'] = false;
             $response['message'] = 'Gagal Approve, Anda Bukan Supervisor Pegawai Terkait';
         }
-
-        // $response['user'] = $user;
-        // $response['data'] = $db;
 
         return response()->json($response, 200);
     }

@@ -16,13 +16,13 @@ class AuthController extends Controller
         if (Auth::attempt(['email' => request('email'), 'password' => request('password')])) {
             $user = Auth::user();
             $response['status'] = true;
-            $response['message'] = 'Berhasil login';
+            $response['message'] = 'Berhasil Login';
             $response['data']['token'] = 'Bearer ' . $user->createToken('token')->accessToken;
 
             return response()->json($response, 200);
         } else {
             $response['status'] = false;
-            $response['message'] = 'Unauthorized';
+            $response['message'] = 'Email dan Password anda tidak terdaftar';
 
             return response()->json($response, 401);
         }
@@ -30,8 +30,6 @@ class AuthController extends Controller
 
     public function register(Request $request)
     {
-        // return $request->all();
-
         $validate = Validator::make($request->all(), [
             'name' => ['string', 'required'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
@@ -57,21 +55,8 @@ class AuthController extends Controller
         ]);
 
         $response['status'] = true;
-        $response['message'] = 'Berhasil registrasi';
+        $response['message'] = 'Berhasil Registrasi';
         $response['data'] = $user->name;
-        // $response['data']['token'] = 'Bearer ' . $user->createToken('LawanKovid')->accessToken;
-
-        return response()->json($response, 200);
-    }
-
-    public function profile()
-    {
-        $user = Auth::user();
-        // $user = $user->makeHidden(['email_verified_at', 'password', 'remember_token']);
-
-        $response['status'] = true;
-        $response['message'] = 'User login profil';
-        $response['data'] = $user;
 
         return response()->json($response, 200);
     }
