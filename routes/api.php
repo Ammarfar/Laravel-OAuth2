@@ -26,3 +26,10 @@ Route::prefix('auth')->group(function () {
         Route::get('logout', 'AuthController@logout');
     });
 });
+
+Route::prefix('epresence')->group(function () {
+    Route::group(['middleware' => 'auth:api'], function () {
+        Route::post('epresence', 'EpresenceController@epresence');
+        Route::get('history', 'EpresenceController@history');
+    });
+});

@@ -17,7 +17,7 @@ class AuthController extends Controller
             $user = Auth::user();
             $response['status'] = true;
             $response['message'] = 'Berhasil login';
-            $response['data']['token'] = 'Bearer ' . $user->createToken('LawanKovid')->accessToken;
+            $response['data']['token'] = 'Bearer ' . $user->createToken('token')->accessToken;
 
             return response()->json($response, 200);
         } else {
@@ -30,15 +30,19 @@ class AuthController extends Controller
 
     public function register(Request $request)
     {
+        // return $request->all();
+
         $validate = Validator::make($request->all(), [
             'name' => ['string', 'required'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
-            'password' => ['required', 'string', 'min:8']
+            'password' => ['required', 'string', 'min:8'],
+            'npp' => ['required', 'numeric', 'min:5', 'unique:users'],
+            'npp_supervisor' => ['numeric', 'min:5', 'nullable'],
         ]);
 
         if ($validate->fails()) {
             $response['status'] = false;
-            $response['message'] = 'Gagal registrasi';
+            $response['message'] = 'Gagal Registrasi';
             $response['error'] = $validate->errors();
 
             return response()->json($response, 422);
@@ -48,10 +52,13 @@ class AuthController extends Controller
             'name' => $request['name'],
             'email' => $request['email'],
             'password' => Hash::make($request['password']),
+            'npp' => $request['npp'],
+            'npp_supervisor' => $request['npp_supervisor'],
         ]);
 
         $response['status'] = true;
         $response['message'] = 'Berhasil registrasi';
+        $response['data'] = $user->name;
         // $response['data']['token'] = 'Bearer ' . $user->createToken('LawanKovid')->accessToken;
 
         return response()->json($response, 200);
@@ -60,7 +67,7 @@ class AuthController extends Controller
     public function profile()
     {
         $user = Auth::user();
-        $user = $user->makeHidden(['email_verified_at', 'password', 'remember_token']);
+        // $user = $user->makeHidden(['email_verified_at', 'password', 'remember_token']);
 
         $response['status'] = true;
         $response['message'] = 'User login profil';
