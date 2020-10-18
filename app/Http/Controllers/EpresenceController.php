@@ -28,6 +28,18 @@ class EpresenceController extends Controller
             return response()->json($response, 422);
         }
 
+        $waktu = substr($request->waktu, 0, 10);
+
+        $cek = DB::table('epresences')
+            ->where('id_users', $user->id)
+            ->where('type', $request->type)
+            ->where('waktu', 'LIKE', "%{$waktu}%")
+            ->first();
+
+        if ($cek) {
+            return response()->json('Anda sudah absen', 422);
+        }
+
         $user = Epresence::create([
             'id_users' => $user->id,
             'type' => $request->type,
@@ -53,34 +65,24 @@ class EpresenceController extends Controller
             ->limit(4)
             ->get();
 
-        $proses = [];
         $result = [];
 
-        for ($i = 0; $i < count($db); $i++) {
-            $db[$i]->jam = substr($db[$i]->waktu, -8);
-            $db[$i]->is_approve == 0 ? $db[$i]->is_approve = 'REJECT' : $db[$i]->is_approve = 'APPROVE';
-        }
-
-        for ($i = 0; $i < count($db); $i++) {
-            $db[$i]->waktu = substr($db[$i]->waktu, 0, 10);
-        }
-
-        for ($i = 0; $i < count($db); $i++) {
-            $j = $i + 1;
-            $j == 4 ? $j = 0 : '';
-            $db[$i]->waktu == $db[$j]->waktu && $db[$i]->id_users == $db[$j]->id_users ? array_push($proses, [$db[$i], $db[$j]])  : '';
-        }
-
-        for ($i = 0; $i < count($proses); $i++) {
-            array_push($result, [
-                'id_user' => $proses[$i][0]->id_users,
-                'nama_user' => $proses[$i][0]->name,
-                'tanggal' => $proses[$i][0]->waktu,
-                'waktu_masuk' => $proses[$i][1]->jam,
-                'waktu_pulang' => $proses[$i][0]->jam,
-                'status_masuk' => $proses[$i][1]->is_approve,
-                'status_pulang' => $proses[$i][0]->is_approve,
-            ]);
+        if ($db[0]->type == 'OUT') {
+            for ($i = 0; $i < 3; $i++) {
+                if ($db[$i]->type == 'OUT') {
+                    array_push($result, [
+                        'id_user' => $db[$i]->id_users,
+                        'nama' => $db[$i]->name,
+                        'tanggal' => substr($db[$i]->waktu, 0, 10),
+                        'waktu_masuk' => substr($db[$i + 1]->waktu, -8),
+                        'waktu_pulang' => substr($db[$i]->waktu, -8),
+                        'status_masuk' => $db[$i + 1]->is_approve == 0 ? 'REJECT' : 'APPROVE',
+                        'status_pulang' => $db[$i]->is_approve == 0 ? 'REJECT' : 'APPROVE',
+                    ]);
+                }
+            }
+        } else {
+            return response()->json('Silahkan absen pulang', 422);
         }
 
         $response['status'] = true;
