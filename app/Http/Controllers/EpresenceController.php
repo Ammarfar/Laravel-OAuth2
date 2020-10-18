@@ -75,19 +75,48 @@ class EpresenceController extends Controller
 
         for ($i = 0; $i < count($proses); $i++) {
             array_push($result, [
-                'id_users' => $proses[$i][0]->id_users,
-                'name' => $proses[$i][0]->name,
+                'id_user' => $proses[$i][0]->id_users,
+                'nama_user' => $proses[$i][0]->name,
                 'tanggal' => $proses[$i][0]->waktu,
-                'waktu masuk' => $proses[$i][1]->jam,
-                'waktu keluar' => $proses[$i][0]->jam,
-                'status masuk' => $proses[$i][1]->is_approve,
-                'status keluar' => $proses[$i][0]->is_approve,
+                'waktu_masuk' => $proses[$i][1]->jam,
+                'waktu_pulang' => $proses[$i][0]->jam,
+                'status_masuk' => $proses[$i][1]->is_approve,
+                'status_pulang' => $proses[$i][0]->is_approve,
             ]);
         }
 
         $response['status'] = true;
         $response['message'] = 'Success get history';
         $response['data'] = $result;
+
+        return response()->json($response, 200);
+    }
+
+    public function approve($id)
+    {
+        $user = Auth::user();
+        // $user = $user->makeHidden(['email_verified_at', 'password', 'remember_token']);
+        // return $user;
+        // return $request->all();
+
+        $db = DB::table('epresences as ep')
+            ->where('ep.id', $id)
+            ->join('users as us', 'us.id', '=', 'ep.id_users')
+            ->first();
+
+        if ($user->npp == $db->npp_supervisor) {
+            DB::table('epresences')
+                ->where('id', $id)
+                ->update(['is_approve' => true]);
+            $response['status'] = true;
+            $response['message'] = 'Berhasil';
+        } else {
+            $response['status'] = false;
+            $response['message'] = 'Gagal Approve, Anda Bukan Supervisor Pegawai Terkait';
+        }
+
+        // $response['user'] = $user;
+        // $response['data'] = $db;
 
         return response()->json($response, 200);
     }
