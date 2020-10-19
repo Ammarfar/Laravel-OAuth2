@@ -59,35 +59,26 @@ class EpresenceController extends Controller
 
         $db = DB::table('epresences as ep')
             ->where('ep.id_users', $user->id)
+            ->where('ep.type', 'IN')
             ->join('users as us', 'us.id', '=', 'ep.id_users')
-            ->select('ep.id_users', 'us.name', 'ep.waktu', 'ep.type', 'ep.is_approve')
+            ->join('epresences as ep2', function ($join) {
+                $join->on('ep2.id_users', '=', 'ep.id_users')
+                    ->where('ep2.type', 'OUT')
+                    ->whereRaw('DATE_FORMAT(ep2.waktu, "%d-%b-%Y") = DATE_FORMAT(ep.waktu, "%d-%b-%Y")');
+            })
+            ->select(DB::raw('ep.id_users,us.name,substr(ep.waktu, 1, 10) as tanggal,substr(ep.waktu, -8) as waktu_datang,substr(ep2.waktu, -8) as waktu_pulang,ep.is_approve as status_datang,ep2.is_approve as status_pulang'))
             ->orderBy('ep.id', 'desc')
-            ->limit(4)
+            ->limit(2)
             ->get();
 
-        $result = [];
-
-        if ($db[0]->type == 'OUT') {
-            for ($i = 0; $i < 3; $i++) {
-                if ($db[$i]->type == 'OUT') {
-                    array_push($result, [
-                        'id_user' => $db[$i]->id_users,
-                        'nama' => $db[$i]->name,
-                        'tanggal' => substr($db[$i]->waktu, 0, 10),
-                        'waktu_masuk' => substr($db[$i + 1]->waktu, -8),
-                        'waktu_pulang' => substr($db[$i]->waktu, -8),
-                        'status_masuk' => $db[$i + 1]->is_approve == 0 ? 'REJECT' : 'APPROVE',
-                        'status_pulang' => $db[$i]->is_approve == 0 ? 'REJECT' : 'APPROVE',
-                    ]);
-                }
-            }
-        } else {
-            return response()->json('Silahkan absen pulang', 422);
+        for ($i = 0; $i < count($db); $i++) {
+            $db[$i]->status_datang = $db[$i]->status_datang ? 'APPROVE' : 'REJECT';
+            $db[$i]->status_pulang = $db[$i]->status_pulang ? 'APPROVE' : 'REJECT';
         }
 
         $response['status'] = true;
         $response['message'] = 'Success get history';
-        $response['data'] = $result;
+        $response['data'] = $db;
 
         return response()->json($response, 200);
     }
